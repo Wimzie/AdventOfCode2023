@@ -6,8 +6,6 @@ For($i = 0; $i -lt $seeds.Count; $i += 2) {
     $seedRanges += "$($seeds[$i]),$($seeds[$i+1])"
 }
 
-$seedDistance = @{}
-
 $soilRanges = $inputList[$($inputList.IndexOf("seed-to-soil map:"))..$($inputList.IndexOf("soil-to-fertilizer map:"))] | Where-Object {$_ -notmatch "[a-z]" -and $_ -ne ""}
 $fertilizerRanges = $inputList[$($inputList.IndexOf("soil-to-fertilizer map:"))..$($inputList.IndexOf("fertilizer-to-water map:"))] | Where-Object {$_ -notmatch "[a-z]" -and $_ -ne ""}
 $waterRanges = $inputList[$($inputList.IndexOf("fertilizer-to-water map:"))..$($inputList.IndexOf("water-to-light map:"))] | Where-Object {$_ -notmatch "[a-z]" -and $_ -ne ""}
@@ -17,7 +15,7 @@ $humidityRanges = $inputList[$($inputList.IndexOf("temperature-to-humidity map:"
 $locationRanges = $inputList[$($inputList.IndexOf("humidity-to-location map:"))..$inputList.Count] | Where-Object {$_ -notmatch "[a-z]" -and $_ -ne ""}
 
 $seedFound = $false
-$location = 3173381
+$location = 0
 while (-not $seedFound) {
     forEach($locationRange in $locationRanges) {
         $instructions = $locationRange.Split(" ")
