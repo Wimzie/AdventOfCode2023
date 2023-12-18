@@ -15,8 +15,8 @@ function CompareHands {
         return $true
     }
 
-    $firstHandChars = $firstHand.ToCharArray() | ForEach {$_ -replace "A",14 -replace "K",13 -replace "Q",12 -replace "J",11 -replace "T",10}
-    $secondHandChars = $SecondHand.ToCharArray() | ForEach {$_ -replace "A",14 -replace "K",13 -replace "Q",12 -replace "J",11 -replace "T",10}
+    $firstHandChars = $firstHand.ToCharArray() | ForEach {$_ -replace "A",14 -replace "K",13 -replace "Q",12 -replace "J",1 -replace "T",10}
+    $secondHandChars = $SecondHand.ToCharArray() | ForEach {$_ -replace "A",14 -replace "K",13 -replace "Q",12 -replace "J",1 -replace "T",10}
 
     for($i = 0; $i -lt 5; $i++) {
         if([int]$firstHandChars[$i] -gt [int]$secondHandChars[$i]) {
@@ -32,29 +32,82 @@ function GetHandRanking {
         $hand
     )
 
-    $duplicateCharacters = ($hand.ToCharArray() | Group-Object) | Where-Object {$_.Count -gt 1}
+    $jokerCount = 0
+
+    if($hand -like "*J*") {
+        $duplicateJokers = (($hand.ToCharArray() | Group-Object) | Where-Object {$_.Count -gt 1 -and $_.Name -eq "J"}).Count
+        if(!$duplicateJokers) {
+            $jokerCount = 1
+        } else {
+            $jokerCount = $duplicateJokers
+        }
+    }
+
+    if($jokerCount -eq 5) {
+        return 7
+    }
+
+    $duplicateCharacters = ($hand.ToCharArray() | Group-Object) | Where-Object {$_.Count -gt 1 -and $_.Name -ne "J"}
 
     if($duplicateCharacters -is [Object[]]) {
-        if(($duplicateCharacters[0].Count -eq 3) -or ($duplicateCharacters[1].Count -eq 3)) {
+        if(($duplicateCharacters[0].Count -eq 3) -or ($duplicateCharacters[1].Count -eq 3) -or ($jokerCount -eq 1)) {
             return 5
         }
         return 3
     }
+
+    #Five of a kind: 7
+    #Four of a kind: 6
+    #Full house: 5
+    #Three of a kind: 4
+    #Two pair: 3
+    #Pair: 2
+    #High card: 1
     
     switch ($duplicateCharacters.Count) {
         5 {
             return 7
         }
         4 {
+            if($jokerCount -eq 1) {
+                return 7
+            }
             return 6
         }
         3 {
+            if($jokerCount -eq 2) {
+                return 7
+            }
+            if($jokerCount -eq 1) {
+                return 6
+            }
             return 4
         }
         2 {
+            if($jokerCount -eq 3) {
+                return 7
+            }
+            if($jokerCount -eq 2) {
+                return 6
+            }
+            if($jokerCount -eq 1) {
+                return 4
+            }
             return 2
         }
         default {
+            if($jokerCount -eq 4) {
+                return 7
+            }
+            if($jokerCount -eq 3) {
+                return 6
+            }
+            if($jokerCount -eq 2) {
+                return 4
+            }
+            if($jokerCount -eq 1) {
+                return 2
+            }
             return 1
         }
     
