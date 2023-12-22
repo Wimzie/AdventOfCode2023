@@ -1,4 +1,4 @@
-$inputList = Get-Content .\inputTest2.txt
+$inputList = Get-Content .\input.txt
 
 function initiateBoard {
     param(
@@ -42,7 +42,7 @@ function checkPosition {
                 return "$([int]$xCord-1),$yCord", $board[$([int]$xCord-1),$yCord], "up"
             }
             #Check down
-            if(($xCord -lt $board.Count -1) -and $board[$([int]$xCord+1),$yCord] -and $board[$([int]$xCord+1),$yCord] -match $validDownPipes) {
+            if(($xCord -lt $inputList.Count -1) -and $board[$([int]$xCord+1),$yCord] -and $board[$([int]$xCord+1),$yCord] -match $validDownPipes) {
                 return "$([int]$xCord+1),$yCord", $board[$([int]$xCord+1),$yCord], "down"
             }
             #Check left
@@ -50,7 +50,7 @@ function checkPosition {
                 return "$xCord,$([int]$yCord-1)", $board[$xCord,$([int]$yCord-1)], "left"
             }
             #Check right
-            if(($yCord -lt $inputList[0].Count -1) -and $board[$xCord,$([int]$yCord+1)] -and $board[$xCord,$([int]$yCord+1)] -match $validRightPipes) {
+            if(($yCord -lt $inputList[0].Length -1) -and $board[$xCord,$([int]$yCord+1)] -and $board[$xCord,$([int]$yCord+1)] -match $validRightPipes) {
                 return "$($xCord,$([int]$yCord+1))", $board[$xCord,$([int]$yCord+1)], "right"
             }
         }
@@ -125,5 +125,71 @@ While($true) {
     $loop += $currentPosition
 }
 
+$enclosedDots = 0
 
 
+$pipeSymbols = "L|J|7|F|S"
+$rowsWithPipes = @()
+ForEach($pos in $loop) {
+    $rowsWithPipes += $pos.Split(",")[0]
+}
+$rowsWithPipes = $rowsWithPipes | Select-Object -Unique
+
+ForEach($row in $rowsWithPipes) {
+    $rowString = ""
+    for($i = 0; $i -lt $inputList[0].Length; $i++) {
+        $rowString += $board[$row, $i]
+    }
+    #if($rowString -match ".*\..*") {
+    #    $indexOfDots = (0..($rowString.Length-1)) | Where-Object {$rowString[$_] -eq "."}
+    For($i = 0; $i -lt $rowString.Length; $i++) {
+        if($loop -contains "$row,$i") {
+            continue
+        }
+        $edgesLeft = 0
+        $symbolsFound = ""
+        for($j = 0; $j -lt $i; $j++) {
+            if($rowString[$j] -eq "|" -and $loop -contains "$row,$j") {
+                $edgesLeft += 1
+            } elseif($rowString[$j] -match $pipeSymbols -and $loop -contains "$row,$j") {
+                $symbolsFound += $rowString[$j]
+            }
+        }
+
+        if($symbolsFound -match "F-*7" -or $symbolsFound -match "L-*J") {
+            $edgesLeft += (2 * ((((($symbolsFound -replace "F-*7", "1") -replace "L-*J", "1") -replace "[A-Z]","") -replace "7","").toCharArray()).Count)
+        } 
+        if($symbolsFound -match "F-*J" -or $symbolsFound -match "L-*7") {
+            $edgesLeft += (1 * ((((($symbolsFound -replace "L-*7", "1") -replace "F-*J", "1") -replace "[A-Z]","") -replace "7","").toCharArray()).Count)
+        }
+
+        if($edgesLeft -eq 0 -or [Math]::Floor($edgesLeft) % 2 -eq 0) {
+            continue
+        }
+
+        $edgesRight = 0
+        $symbolsFound = ""
+        for($j = $i+1; $j -lt $rowString.Length; $j++) {
+            if($rowString[$j] -eq "|" -and $loop -contains "$row,$j") {
+                $edgesRight += 1
+            } elseif($rowString[$j] -match $pipeSymbols -and $loop -contains "$row,$j") {
+                $symbolsFound += $rowString[$j]
+            }
+        }
+
+        if($symbolsFound -match "F-*7" -or $symbolsFound -match "L-*J") {
+            $edgesRight += (2 * ((((($symbolsFound -replace "F-*7", "1") -replace "L-*J", "1") -replace "[A-Z]","") -replace "7","").toCharArray()).Count)
+        }
+        if($symbolsFound -match "F-*J" -or $symbolsFound -match "L-*7") {
+            $edgesRight += (1 * ((((($symbolsFound -replace "L-*7", "1") -replace "F-*J", "1") -replace "[A-Z]","") -replace "7","").toCharArray()).Count)
+        }
+
+        if($edgesRight -eq 0 -or [Math]::Floor($edgesRight) % 2 -eq 0) {
+            continue
+        }
+        $enclosedDots++
+    }
+    #}
+}
+
+Write-Host $enclosedDots
